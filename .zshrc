@@ -1,113 +1,130 @@
-# ================================================
-# ZSH CONFIG: Oh My Zsh + Autosuggestions
-# ================================================
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# ======================================================
+# 🌙 Chad LunarVim Style ZSHRC (Termux Edition)
+# ======================================================
 
 # -------------------------------
-# Start ssh-agent if not already running
+# Paths & Environment
 # -------------------------------
-if [ -z "$SSH_AUTH_SOCK" ] ; then
-    eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_ed25519
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+export VIMRUNTIME="/data/data/com.termux/files/usr/share/nvim/runtime"
+export LV_CONFIG_DIR="$HOME/.config/lvim-test"
+
+# -------------------------------
+# Theme Color Support.
+# -------------------------------
+export TERM="xterm-256color"
+export COLORTERM="truecolor"
+
+# -------------------------------
+# SSH Agent Auto-Start
+# -------------------------------
+if [ -z "$SSH_AUTH_SOCK" ]; then
+    eval "$(ssh-agent -s)" >/dev/null
+    ssh-add ~/.ssh/id_ed25519 >/dev/null 2>&1
 fi
 
 # -------------------------------
-# Persistent command history
+# History: Infinite, Shared, Clean
 # -------------------------------
 HISTFILE=~/.zsh_history
 HISTSIZE=100000
 SAVEHIST=100000
 
-# History options
 setopt APPEND_HISTORY
 setopt SHARE_HISTORY
 setopt INC_APPEND_HISTORY
 setopt EXTENDED_HISTORY
 setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_ALL_DUPS
-setopt HIST_IGNORE_SPACE                                                                                                                                  setopt HIST_SAVE_NO_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_SAVE_NO_DUPS
 setopt HIST_REDUCE_BLANKS
 setopt HIST_VERIFY
 setopt HIST_FIND_NO_DUPS
 
 # -------------------------------
-# Oh My Zsh setup
+# Oh My Zsh
 # -------------------------------
 export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="powerlevel10k/powerlevel10k"
 
-# Choose a theme (default Zsh theme)
-ZSH_THEME="robbyrussell"
-
-# Enable plugins
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+# Plugins: Git + productivity
+plugins=(
+  git
+  zsh-autosuggestions
+  zsh-syntax-highlighting
+  fasd
+)
 
 # Load Oh My Zsh
-if [ -d "$ZSH" ]; then
-    source $ZSH/oh-my-zsh.sh
-fi
+[ -f "$ZSH/oh-my-zsh.sh" ] && source "$ZSH/oh-my-zsh.sh"
 
 # -------------------------------
-# zsh-autosuggestions
+# zsh-autosuggestions & syntax-highlighting
+# (if installed outside Oh My Zsh plugins)
 # -------------------------------
-if [ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
-    source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
-fi
+[[ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
+  source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+[[ -f ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
+  source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # -------------------------------
-# zsh-syntax-highlighting
+# Fast Directory Navigation (fasd)
 # -------------------------------
-if [ -f ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
-    source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-fi
+eval "$(fasd --init auto)"
 
 # -------------------------------
-# Custom prompt fallback
+# Aliases: Extra Speed
 # -------------------------------
-set_prompt() {
-    if [[ "$PWD" == "$HOME" ]]; then
-        PROMPT='%F{cyan}~%f %# '
-    else
-        PROMPT='%F{cyan}%~%f %# '
-    fi
-}
-
-autoload -Uz add-zsh-hook
-add-zsh-hook chpwd set_prompt
-add-zsh-hook precmd set_prompt
-set_prompt
-
-# -------------------------------
-# Aliases & Extras
-# -------------------------------
-alias ll='exa -lah --git'        # Use exa instead of ls
+alias ll='exa -lah --git'
 alias gs='git status'
 alias gp='git push'
 alias gd='git diff'
-alias ls='eza -lh --color=auto --sort=modified'
+alias ls='exa -lh --color=auto --sort=modified'
+alias cl='clear'
+alias vi='nvim'
 
 # -------------------------------
-export TERM=xterm-256color
-
-#--------------------------------
-# Keybindings
-#--------------------------------
-# Move to the start of the line
+# Keybindings: Vim-style Power
+# -------------------------------
 bindkey '^A' beginning-of-line
-
-# Move to the end of the line
 bindkey '^E' end-of-line
-# Force Enter (Ctrl+M) to execute commands
-bindkey '^M' accept-line #important
+bindkey '^M' accept-line  # Ctrl+M = Enter
 
-# Initialize fasd
-eval "$(fasd --init auto)"
-
-# Search and Load folder sl
+# -------------------------------
+# Super Directory Finder
+# -------------------------------
 sl() {
-  dir=$(find $HOME -type d -iname "$1" 2>/dev/null | head -n 1)
-  if [ -n "$dir" ]; then
-    cd "$dir" || return
-    echo "→ Moved to: $dir"
-  else
-    echo "No match found for: $1"
-  fi
+    local dir
+    dir=$(find "$HOME" -type d -iname "$1" 2>/dev/null | head -n 1)
+    if [[ -n "$dir" ]]; then
+        cd "$dir" || return
+        echo "→ Moved to: $dir"
+    else
+        echo "❌ No match found for: $1"
+    fi
 }
+
+# -------------------------------
+# Extra Visual & Performance Tweaks
+# -------------------------------
+setopt AUTO_MENU
+setopt AUTO_PARAM_SLASH
+setopt NO_BEEP
+setopt HIST_IGNORE_ALL_DUPS
+
+# Better grep
+export GREP_OPTIONS='--color=auto'
+
+echo "🚀 Chad ZSH Loaded! LunarVim Mode: ACTIVATED"
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
